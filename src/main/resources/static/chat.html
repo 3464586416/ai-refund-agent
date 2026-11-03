@@ -218,7 +218,7 @@
             const botMessageElement = createBotMessageContainer();
             let botResponse = '';
 
-            fetch('http://localhost:8080/ai/memory_steam_chat?message=' + encodeURIComponent(message), {
+            fetch('/ai/memory_steam_chat?message=' + encodeURIComponent(message), {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
             })
