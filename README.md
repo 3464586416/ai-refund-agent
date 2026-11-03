@@ -14,10 +14,10 @@ app_port: 7860
 
 | 能力 | 实现 |
 |------|------|
-| 客服角色约束 | `@SystemMessage` 定义「12345 铁路客服」人设，办理业务前必须先收集预订号与客户姓名，自动注入当前日期 |
-| Function Calling | `@Tool` 声明 `queryTicketsByUsername` / `processRefund`，模型自主决定何时调用，经 MyBatis-Plus 查询/更新**真实 MySQL 数据** |
+| 客服角色约束 | `@SystemMessage` 定义「12345 铁路客服」人设，办理业务前必须先收集预订号与客户姓名，退票另需核验注册手机号，自动注入当前日期 |
+| Function Calling | `@Tool` 声明 `queryTicketsByUsername` / `processRefund`（带手机号身份核验参数），模型自主决定何时调用，经 MyBatis-Plus 查询/更新**真实 MySQL 数据** |
 | RAG 检索增强 | 退票条款文本 → 200 字符滑窗切块 → DashScope 向量化 → `EmbeddingStoreContentRetriever`（maxResults=5, minScore=0.6）；条款加载失败自动降级为纯对话 |
-| 多轮记忆 | `MessageWindowChatMemory` 10 轮滑动窗口（进程内，重启即清）；`FileChatMemoryStore` 提供另一套按 memoryId 分文件的存储实现，当前线上端点未启用 |
+| 多轮记忆 | `@MemoryId` + `chatMemoryProvider`：以浏览器 HttpSession ID 为界，每个访客独立的 10 轮滑动窗口（进程内，重启即清，多访客互不串线）；`FileChatMemoryStore` 提供另一套按 memoryId 分文件的存储实现，当前线上端点未启用 |
 | 流式输出 | `TokenStream` → `Flux<String>`（SSE），前端逐字渲染，不等全文 |
 | 接口限流 | `AiRateLimitFilter`（滑动窗口）：每 IP 每分钟最多 10 次调用，超出 429；单条消息 >300 字直接 413；兼容反向代理 `X-Forwarded-For`。另在模型层设 `max-tokens=800` 封顶单次输出——公开部署下三重防刷，杜绝大模型 token 被薅 |
 
@@ -59,10 +59,10 @@ start http://localhost:8080/chat.html
 ```
 用户：我是张三，想退掉我的票
 助手：（调用 queryTicketsByUsername("张三") → 查到票 1：北京→上海 ¥500）
-      为您查到一张 5 月 1 日北京到上海的票，票号 1，确认退票吗？
-用户：确认
-助手：（调用 processRefund("张三", 1) → UPDATE tickets/refund_records）
-      已为您办理退票，退款 500.00 元将于 3-5 个工作日原路退回～
+      为您查到一张 5 月 1 日北京到上海的票，票号 1。为保护账户安全，请提供注册手机号后四位核验～
+用户：我的注册手机号是 13800138001
+助手：（调用 processRefund("张三", 1, "13800138001") → 手机号核验通过 → UPDATE tickets/refund_records）
+      核验通过，已为您办理退票，退款 500.00 元将于 3-5 个工作日原路退回～
 ```
 
 ## 📁 项目结构

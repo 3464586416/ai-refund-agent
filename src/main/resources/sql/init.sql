@@ -1,5 +1,8 @@
+-- 务必以 UTF-8 方式导入，否则中文会变乱码
+SET NAMES utf8mb4;
+
 -- 创建数据库
-CREATE DATABASE IF NOT EXISTS ticketdb DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+CREATE DATABASE IF NOT EXISTS ticketdb DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 
 USE ticketdb;
 

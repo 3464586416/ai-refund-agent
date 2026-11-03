@@ -31,21 +31,17 @@ public class AiConfig {
 
     // 定义AI助手的公共接口
     public interface Assistant{
-        // 普通聊天方法（阻塞式，返回完整响应）
-        public abstract String chat(String message);
-
-        // 流式响应方法（实时返回生成的token）
-        public abstract TokenStream stream(String message);
-
         //定义角色
         @SystemMessage("""
                 您是"12345"铁路公司的客户聊天支持代理。请以友好、乐于助人且愉快的方式来回复。
                 您正在通过在线聊天系统与客户互动。
                 在提供有关预订或取消预订的信息之前，您必须始终从用户处获取以下信息:预订号、客户姓名。
+                办理退票时，还必须请用户提供与账号一致的注册手机号进行身份核验，核验不通过不得办理退票。
                 请讲中文。
                 今天的日期是 {{current_date}}.
                 """)
-        TokenStream stream(@UserMessage String userMessage,
+        TokenStream stream(@MemoryId String sessionId,
+                           @UserMessage String userMessage,
                            @V("current_date") String currentDate);
     }
 
@@ -75,12 +71,11 @@ public class AiConfig {
             StreamingChatLanguageModel streamingChatLanguageModel,
             ToolsService toolsService){
 
-        ChatMemory chatMemory = MessageWindowChatMemory.withMaxMessages(10);
-
         Assistant assistant = AiServices.builder(Assistant.class)
                 .chatLanguageModel(chatLanguageModel)
                 .streamingChatLanguageModel(streamingChatLanguageModel)
-                .chatMemory(chatMemory)
+                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.builder()
+                        .id(memoryId).maxMessages(10).build())
                 .tools(toolsService)
                 .build();
 
@@ -94,8 +89,6 @@ public class AiConfig {
                                EmbeddingStore embeddingStore,
                                QwenEmbeddingModel qwenEmbeddingModel
     ) {
-        ChatMemory chatMemory = MessageWindowChatMemory.withMaxMessages(10);
-
         ContentRetriever contentRetriever = EmbeddingStoreContentRetriever.builder()
                 .embeddingStore(embeddingStore)
                 .embeddingModel(qwenEmbeddingModel)
@@ -108,7 +101,8 @@ public class AiConfig {
                 .contentRetriever(contentRetriever)
                 .chatLanguageModel(qwenChatModel)
                 .streamingChatLanguageModel(qwenStreamingChatModel)
-                .chatMemory(chatMemory)
+                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.builder()
+                        .id(memoryId).maxMessages(10).build())
                 .build();
 
         return  assistant;

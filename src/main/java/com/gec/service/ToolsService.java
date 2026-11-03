@@ -14,12 +14,6 @@ public class ToolsService {
     @Autowired
     TicketServiceImpl ticketService;
 
-    @Tool("广州有多少个名字的")
-    public Integer guangZhouNameCount(@P("姓名") String name){
-        System.out.println(name);
-        return 10000;
-    }
-
     @Tool("城市的天气如何")
     public String guangZhouWeather(@P("广州") String city){
         System.out.println(city+"去调用今天天气的api");
@@ -41,13 +35,16 @@ public class ToolsService {
     }
 
     /**
-     * 处理退票申请
+     * 处理退票申请（需手机号身份核验）
      * @param username 用户名
      * @param ticketId 票号
+     * @param phone 注册手机号
      * @return 退票是否成功
      */
-    @Tool("根据用户名和订单号退票处理")
-    public boolean processRefund(@P("用户名") String username, @P("票号") Integer ticketId) {
-        return ticketService.refundTicketByUsernameAndTicketId(username, ticketId);
+    @Tool("根据用户名、订单号和注册手机号办理退票；手机号与账号预留号码不一致时核验不通过，退票失败")
+    public boolean processRefund(@P("用户名") String username,
+                                 @P("票号") Integer ticketId,
+                                 @P("注册手机号") String phone) {
+        return ticketService.refundTicketByUsernameAndTicketId(username, ticketId, phone);
     }
 }

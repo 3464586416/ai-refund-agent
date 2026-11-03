@@ -44,14 +44,22 @@ public class TicketServiceImpl {
     }
 
     /**
-     * 根据用户名和票号退票
+     * 根据用户名、票号和注册手机号退票（手机号核验身份）
      * @param username 用户名
      * @param ticketId 车票 ID
+     * @param phone    用户声称的注册手机号，需与账号预留号码一致
      * @return 退票是否成功
      */
-    public boolean refundTicketByUsernameAndTicketId(String username, Integer ticketId) {
+    public boolean refundTicketByUsernameAndTicketId(String username, Integer ticketId, String phone) {
         Optional<Integer> userId = getUserIdByUsername(username);
         if (userId.isPresent()) {
+            // 身份核验：手机号必须与账号预留号码一致，防止仅凭姓名+票号恶意退票
+            Users user = userMapper.selectById(userId.get());
+            if (user == null || user.getPhone() == null
+                    || phone == null || !phone.trim().equals(user.getPhone().trim())) {
+                System.out.println("[退票被拒] 手机号核验未通过: username=" + username);
+                return false;
+            }
             Tickets ticket = ticketMapper.selectById(ticketId);
             if (ticket != null && ticket.getUserId().equals(userId.get()) && !ticket.getIsRefunded()) {
                 // 计算退票金额
