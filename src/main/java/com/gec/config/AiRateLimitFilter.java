@@ -25,8 +25,10 @@ public class AiRateLimitFilter extends OncePerRequestFilter {
 
     /** 限流窗口：60 秒 */
     private static final long WINDOW_MILLIS = 60_000L;
-    /** 每 IP 每窗口最大请求数（覆盖正常连聊速度，足够面试官演示用） */
-    private static final int MAX_REQUESTS_PER_WINDOW = 20;
+    /** 每 IP 每窗口最大请求数（覆盖正常连聊速度，防止公开部署后被刷） */
+    private static final int MAX_REQUESTS_PER_WINDOW = 10;
+    /** 单条消息最大长度（字符），限制单次请求的输入 token 规模 */
+    private static final int MAX_MESSAGE_LENGTH = 300;
 
     private final Map<String, Deque<Long>> hits = new ConcurrentHashMap<>();
 
@@ -41,6 +43,16 @@ public class AiRateLimitFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
+        // 输入长度闸门：限制单次请求携带的提示词规模（GET 查询参数场景）
+        String message = request.getParameter("message");
+        if (message != null && message.length() > MAX_MESSAGE_LENGTH) {
+            response.setStatus(413);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write(
+                    "{\"error\":\"消息过长，最多 " + MAX_MESSAGE_LENGTH + " 字，请精简后重试\"}");
+            return;
+        }
+
         String ip = clientIp(request);
         long now = System.currentTimeMillis();
         Deque<Long> timestamps = hits.computeIfAbsent(ip, k -> new ArrayDeque<>());

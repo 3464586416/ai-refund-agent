@@ -14,7 +14,7 @@
 | RAG 检索增强 | 退票条款文本 → 200 字符滑窗切块 → DashScope 向量化 → `EmbeddingStoreContentRetriever`（maxResults=5, minScore=0.6）；条款加载失败自动降级为纯对话 |
 | 多轮记忆 | `MessageWindowChatMemory` 10 轮滑动窗口；另有 `FileChatMemoryStore` + session 作用域 Bean 支持按会话持久化 |
 | 流式输出 | `TokenStream` → `Flux<String>`（SSE），前端逐字渲染，不等全文 |
-| 接口限流 | `AiRateLimitFilter`（滑动窗口）：每 IP 每分钟最多 20 次 AI 调用，超出返回 429；兼容反向代理 `X-Forwarded-For`，防止公开部署后被刷、真实消耗大模型 token |
+| 接口限流 | `AiRateLimitFilter`（滑动窗口）：每 IP 每分钟最多 10 次调用，超出 429；单条消息 >300 字直接 413；兼容反向代理 `X-Forwarded-For`。另在模型层设 `max-tokens=800` 封顶单次输出——公开部署下三重防刷，杜绝大模型 token 被薅 |
 
 ## 🧠 架构
 
