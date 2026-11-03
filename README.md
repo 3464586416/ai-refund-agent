@@ -17,7 +17,7 @@ app_port: 7860
 | 客服角色约束 | `@SystemMessage` 定义「12345 铁路客服」人设，办理业务前必须先收集预订号与客户姓名，自动注入当前日期 |
 | Function Calling | `@Tool` 声明 `queryTicketsByUsername` / `processRefund`，模型自主决定何时调用，经 MyBatis-Plus 查询/更新**真实 MySQL 数据** |
 | RAG 检索增强 | 退票条款文本 → 200 字符滑窗切块 → DashScope 向量化 → `EmbeddingStoreContentRetriever`（maxResults=5, minScore=0.6）；条款加载失败自动降级为纯对话 |
-| 多轮记忆 | `MessageWindowChatMemory` 10 轮滑动窗口；另有 `FileChatMemoryStore` + session 作用域 Bean 支持按会话持久化 |
+| 多轮记忆 | `MessageWindowChatMemory` 10 轮滑动窗口（进程内，重启即清）；`FileChatMemoryStore` 提供另一套按 memoryId 分文件的存储实现，当前线上端点未启用 |
 | 流式输出 | `TokenStream` → `Flux<String>`（SSE），前端逐字渲染，不等全文 |
 | 接口限流 | `AiRateLimitFilter`（滑动窗口）：每 IP 每分钟最多 10 次调用，超出 429；单条消息 >300 字直接 413；兼容反向代理 `X-Forwarded-For`。另在模型层设 `max-tokens=800` 封顶单次输出——公开部署下三重防刷，杜绝大模型 token 被薅 |
 
@@ -72,7 +72,7 @@ ZNTP/
 ├── src/main/java/com/gec/
 │   ├── config/AiConfig.java            # 助手装配：提示词 / Tools / RAG 检索器 / 条款向量化灌库
 │   ├── config/AssistantConfig.java     # session 作用域 ChatMemory
-│   ├── config/FileChatMemoryStore.java # 对话记忆文件持久化
+│   ├── config/FileChatMemoryStore.java # ChatMemoryStore 文件存储实现（实验性，未接入线上路径）
 │   ├── config/AiRateLimitFilter.java   # /ai/** 每 IP 滑动窗口限流（429）
 │   ├── controller/AiController.java    # /ai/memory_steam_chat，TokenStream → Flux SSE
 │   ├── entity/ + mapper/               # MyBatis-Plus：users / trips / tickets / refund_records

@@ -3,6 +3,9 @@ CREATE DATABASE IF NOT EXISTS ticketdb DEFAULT CHARACTER SET utf8 COLLATE utf8_g
 
 USE ticketdb;
 
+-- 老库重跑时避免外键阻止 DROP
+SET FOREIGN_KEY_CHECKS = 0;
+
 -- 顾客信息表
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
@@ -65,3 +68,5 @@ CREATE TABLE `refund_records` (
 
 INSERT INTO `refund_records` VALUES (1, 1, '2025-04-22 14:00:00', 450.00);
 INSERT INTO `refund_records` VALUES (2, 2, '2025-05-12 19:51:56', 600.00);
+
+SET FOREIGN_KEY_CHECKS = 1;

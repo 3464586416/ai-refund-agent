@@ -22,7 +22,7 @@ public class AiController {
     ChatLanguageModel chatLanguageModel;
 
     @Autowired
-    @Qualifier("getAssistant")
+    @Qualifier("qwenAssistant")
     AiConfig.Assistant assistant;
 
     @Autowired
