@@ -1,8 +1,3 @@
----
-emoji: 🎫
-sdk: docker
-app_port: 7860
----
 # 智能退票 AI 客服（ZNTP）
 
 > 铁路客票场景的智能客服：多轮对话记忆 + 退票条款 RAG 检索 + Function Calling 直连数据库完成**查票 / 退票**业务操作，回答经 SSE 流式输出到网页。
